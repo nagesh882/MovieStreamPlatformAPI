@@ -1,16 +1,18 @@
 from django.shortcuts import render, HttpResponse
-from .models import StreamPlatform, WatchList
-from .serializers import StreamPlatformSerializer, WatchListSerializer
+from .models import StreamPlatform, WatchList, Review
+from .serializers import StreamPlatformSerializer, WatchListSerializer, ReviewSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
+from rest_framework import generics
 
 @api_view(['GET'])
 def api_root(request, format=None):
     return Response({
         'watchlist': reverse('movie-list', request=request, format=format),
-        'streamplatform': reverse('stream-platform', request=request, format=format)
+        'streamplatform': reverse('stream-platform', request=request, format=format),
+        'reviewlist': reverse('review-list', request=request, format=format)
     })
 
 
@@ -38,7 +40,7 @@ def movie_detail(request, pk, format=None):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == "GET":
-        serializer = WatchListSerializer(movie_platform)
+        serializer = WatchListSerializer(movie_platform, context={'request':request})
         return Response(serializer.data)
     
     elif request.method == "PUT":
@@ -86,7 +88,7 @@ def stream_detail(request, pk, format=None):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == "GET":
-        serializer = StreamPlatformSerializer(stream_platform)
+        serializer = StreamPlatformSerializer(stream_platform, context={'request':request})
         return Response(serializer.data)
     
     elif request.method == "PUT":
@@ -108,3 +110,14 @@ def stream_detail(request, pk, format=None):
     else:
         stream_platform.delete()
         return Response(status=status.HTTP_404_NOT_FOUND)
+    
+
+
+class ReviewListView(generics.ListCreateAPIView):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+
+
+class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
